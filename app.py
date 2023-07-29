@@ -1,15 +1,16 @@
-from flask import Flask, render_template, g
-import sqlite3
-from flask_socketio import SocketIO, emit
 import os
 
 from loguru import logger
 
+from flask import Flask, render_template, g
+import sqlite3
+from flask_socketio import SocketIO, emit
+
+
 app = Flask(__name__)
-
 app.config.from_object(__name__)
-
 app.config.update(dict(data=os.path.join(app.root_path, 'instance/test.db')))
+socket = SocketIO(app)
 
 
 def connect_db():
@@ -18,22 +19,9 @@ def connect_db():
     return conn
 
 
-def get_db():
-    if not hasattr(g, 'link_db'):
-        g.link_db = connect_db()
-    return g.link_db
-
-
-basedir = os.path.abspath(os.path.dirname(__file__))
-
-
-socket = SocketIO(app)
-
-
 @app.route('/', methods=['POST', 'GET'])
 def home():
-    db = get_db()
-    return render_template('home.html', menu = [])
+    return render_template('home.html')
 
 
 @socket.on("filter")
@@ -45,11 +33,10 @@ def filter(data):
         {data['field']} = '{data['value']}' 
     """
 
-    db = get_db()
+    db = connect_db()
     filtered_courses = db.cursor().execute(query).fetchall()
 
     logger.info(filtered_courses)
-    db.close()
 
     for course in filtered_courses:
         emit("filter", dict(course))
