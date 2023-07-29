@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="filters">
+        <input
+            type="text"
+            rows="1"
+            placeholder="Message"
+            name="message"
+            id="input_field"
+        />
+
+        <input
+            type="text"
+            rows="1"
+            placeholder="Message"
+            name="message"
+            id="input_value"
+        />
+
+        <button type="button" name="send" id="send-btn"
+        onclick="filterCourses()">
+            Filter
+        </button>
+    </div>
+
+    <div id="filtered_courses">AAAA</div>
+    
+    <script type="text/javascript">
+        var socket = io();
+
+        const field = document.getElementById("input_field");
+        const value = document.getElementById("input_value");
+        const filtered_courses = document.getElementById("filtered_courses");
+
+        const showCourse = (courses) => {
+            const content = `
+                <div class="text">
+                    <span style="color:blue">
+                        <strong>a ${courses['field']}</strong>
+                    </span>
+                    <span style="color:red">
+                        ${courses['value']}
+                    </span>
+                </div>
+                `;
+            filtered_courses.innerHTML += content;
+        }
+
+        socket.on("filter", (data) => {
+            showCourse(data);
+        })
+        
+        const filterCourses = () => {
+            const field = document.getElementById("input_field");
+            const value = document.getElementById("input_value");
+            
+            socket.emit("filter", {field: field.value, value: value.value})
+        }
+        
+    </script>
+    {% for course in courses %}
+        <script type="text/javascript">
+            showCourse(course);
+        </script>
+    {% endfor %}
+{% endblock %}
