@@ -24,7 +24,6 @@
     </div>
 
     <div id="filtered_courses">AAAA</div>
-    
     <script type="text/javascript">
         var socket = io();
 
@@ -33,10 +32,11 @@
         const filtered_courses = document.getElementById("filtered_courses");
 
         const showCourse = (course) => {
+            filtered_courses.innerHTML = ''
             const content = `
                 <div class="text">
                     <span style="color:blue">
-                        <strong>a ${course['name']}</strong>
+                        <strong>${course['name']}</strong>
                     </span>
                     <span style="color:red">
                         ${course['topic']}

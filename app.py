@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, g
 import sqlite3
 from flask_socketio import SocketIO, emit
 import os
@@ -18,6 +18,12 @@ def connect_db():
     return conn
 
 
+def get_db():
+    if not hasattr(g, 'link_db'):
+        g.link_db = connect_db()
+    return g.link_db
+
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -26,7 +32,8 @@ socket = SocketIO(app)
 
 @app.route('/', methods=['POST', 'GET'])
 def home():
-    return render_template('home.html')
+    db = get_db()
+    return render_template('home.html', menu = [])
 
 
 @socket.on("filter")
@@ -38,14 +45,14 @@ def filter(data):
         {data['field']} = '{data['value']}' 
     """
 
-    db = connect_db()
-    filtered_courses = db.cursor().executescript(query).fetchall()
+    db = get_db()
+    filtered_courses = db.cursor().execute(query).fetchall()
 
     logger.info(filtered_courses)
-
     db.close()
+
     for course in filtered_courses:
-        emit("filter", course)
+        emit("filter", dict(course))
 
 
 if __name__ == "__main__":
