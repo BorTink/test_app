@@ -32,22 +32,24 @@
         const value = document.getElementById("input_value");
         const filtered_courses = document.getElementById("filtered_courses");
 
-        const showCourse = (courses) => {
+        const showCourse = (course) => {
             const content = `
                 <div class="text">
                     <span style="color:blue">
-                        <strong>a ${courses['field']}</strong>
+                        <strong>a ${course['name']}</strong>
                     </span>
                     <span style="color:red">
-                        ${courses['value']}
+                        ${course['topic']}
+                        ${course['field']}
+                        ${course['university']}
                     </span>
                 </div>
                 `;
             filtered_courses.innerHTML += content;
         }
 
-        socket.on("filter", (data) => {
-            showCourse(data);
+        socket.on("filter", (course) => {
+            showCourse(course);
         })
         
         const filterCourses = () => {

@@ -1,20 +1,27 @@
-from flask import Flask, render_template, request, session, redirect, url_for
-from sqlalchemy import select, create_engine, text
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template
+import sqlite3
 from flask_socketio import SocketIO, emit
 import os
+
+from loguru import logger
+
+app = Flask(__name__)
+
+app.config.from_object(__name__)
+
+app.config.update(dict(data=os.path.join(app.root_path, 'instance/test.db')))
+
+
+def connect_db():
+    conn = sqlite3.connect(app.config['data'])
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'bruhh'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-
 
 socket = SocketIO(app)
-
-db = SQLAlchemy(app)
 
 
 @app.route('/', methods=['POST', 'GET'])
@@ -24,32 +31,22 @@ def home():
 
 @socket.on("filter")
 def filter(data):
-    # print('ASDSAODHASOIDHASOID ' + data['field'] + " " + data['value'])
+    query = f"""
+        SELECT *
+        FROM courses
+        WHERE 
+        {data['field']} = '{data['value']}' 
+    """
 
-    # print(type(Courses))
+    db = connect_db()
+    filtered_courses = db.cursor().executescript(query).fetchall()
 
-    # statement = f"SELECT * FROM courses WHERE {data['field']} = \"{data['value']}\""
+    logger.info(filtered_courses)
 
-    # with engine.connect() as conn:
-    #     result = conn.execute(
-    #         text(statement)
-    #     )
-
-    emit("filter", data)
-
-
-class Courses(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150))
-    topic = db.Column(db.String(150))
-    field = db.Column(db.String(150))
-    university = db.Column(db.String(150))
+    db.close()
+    for course in filtered_courses:
+        emit("filter", course)
 
 
 if __name__ == "__main__":
-    with app.app_context():
-        engine = create_engine('sqlite:///test.db')
-        db.create_all()
-    
-
     socket.run(app, debug=True)
